@@ -7,9 +7,8 @@
  * @Github: https://github.com/SkyBlueFeet
 -->
 
-# rollup-plain-starter
+# cesium-plugins-draw
 
 ## Feature
 
-- 可打包纯 js 或 ts 项目
-- 除了 babel、eslint、typescript 外没有其他配置
+- Cesium 画点、折线、多边形面、圆、长方形等几何体，配置灵活
