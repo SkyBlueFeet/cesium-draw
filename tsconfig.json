@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+        "moduleResolution": "node",
+        "noEmitOnError": true,
+        "removeComments": false,
+        "resolveJsonModule": true,
+        "experimentalDecorators": true,
+        "downlevelIteration": true,
+        "esModuleInterop": true,
+        "module": "ESNext",
+        "target": "ES5",
+        "jsx": "preserve",
+        "jsxFactory": "h",
+        "baseUrl": "./",
+        "noEmit": false,
+        "lib": ["ES2015", "ES2016", "ES2017", "DOM"],
+        "types": ["node"],
+        "paths": {
+            "@bin/*": ["bin/*"]
+        },
+    },
+    "exclude": ["node_modules", "dist", "types"]
+}

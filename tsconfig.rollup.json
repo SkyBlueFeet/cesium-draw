@@ -1,0 +1,30 @@
+{
+    "compilerOptions": {
+        "moduleResolution": "node",
+        "noEmitOnError": true,
+        "allowSyntheticDefaultImports": true,
+        "declaration": false,
+        "removeComments": true,
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "resolveJsonModule": true,
+        "downlevelIteration": true,
+        "esModuleInterop": true,
+        "module": "CommonJS",
+        "target": "ES5",
+        "sourceMap": true,
+        "baseUrl": "./",
+        "noEmit": true,
+        "lib": [
+            "ES2015",
+            "DOM",
+            "ES2016",
+            "ES2017",
+            "ESNext",
+            "ES2015.Promise"
+        ],
+        "types": ["node", "rollup"]
+    },
+    "include": ["script"],
+    "exclude": ["node_modules", "dist", ".*"]
+}

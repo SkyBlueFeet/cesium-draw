@@ -1,0 +1,28 @@
+{
+    "compilerOptions": {
+        "moduleResolution": "node",
+        "noEmitOnError": true,
+        "emitDeclarationOnly": true,
+        "declaration": true,
+        "declarationDir": "types",
+        "removeComments": false,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "resolveJsonModule": true,
+        "downlevelIteration": true,
+        "esModuleInterop": true,
+        "module": "ESNext",
+        "target": "ES5",
+        "incremental": true,
+        "sourceMap": false,
+        "baseUrl": "./",
+        "jsx": "preserve",
+        "jsxFactory": "h",
+        "noEmit": false,
+        "outDir": "dist",
+        "lib": ["ES2015", "ES2016", "ES2017", "DOM"],
+        "types": ["lodash"]
+    },
+    "include": ["lib", "declare"],
+    "exclude": ["node_modules", "dist", "types"]
+}
