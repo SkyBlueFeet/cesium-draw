@@ -60,12 +60,19 @@
       let drawer
 
       function getDrawType() {
-        const mapping = ['POINT', 'LINE', 'POLYGON', 'CIRCLE', 'RECTANGLE']
+        const mapping = ['POINT', 'POLYLINE', 'POLYGON', 'CIRCLE', 'RECTANGLE']
         return mapping[select.selectedIndex]
       }
 
       function getChectoutValue(id) {
         return document.querySelector(id).checked
+      }
+
+      function update() {
+        if (drawer) drawer.destroy()
+        drawer = new CesiumDraw(getDrawOption())
+
+        drawer.start(getStartOption())
       }
 
       document.querySelector('#draw-type').addEventListener('change', update)
@@ -96,15 +103,6 @@
           terrainProvider: Cesium.createWorldTerrain()
         })
         update()
-
-        console.log(getChectoutValue('#once'))
-      }
-
-      function update() {
-        if (drawer) drawer.destroy()
-        drawer = new CesiumDraw(getDrawOption())
-
-        drawer.start(getStartOption())
       }
     </script>
   </body>

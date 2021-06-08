@@ -91,7 +91,7 @@ export interface DrawOption {
 
   dynamicGraphicsOptions?: {
     POINT?: PointGraphics.ConstructorOptions
-    LINE?: PolylineGraphics.ConstructorOptions
+    POLYLINE?: PolylineGraphics.ConstructorOptions
     POLYGON?: PolygonGraphics.ConstructorOptions
     CIRCLE?: EllipseGraphics.ConstructorOptions
     RECTANGLE?: RectangleGraphics.ConstructorOptions
@@ -105,7 +105,7 @@ type StartOption = {
    * @desc 勾画类型 目前支持 Polygon、Line、Point、Circle、Rectangle
    * @default false
    */
-  type: 'POLYGON' | 'LINE' | 'POINT' | 'CIRCLE' | 'RECTANGLE'
+  type: 'POLYGON' | 'POLYLINE' | 'POINT' | 'CIRCLE' | 'RECTANGLE'
 
   /**
    * 是否只勾画一次，如果设为true，则在第一勾画结束时停止
@@ -145,7 +145,7 @@ const defaultOptions: Optional<DrawOption> = {
    * 图形勾画时的Entity样式
    */
   dynamicGraphicsOptions: {
-    LINE: {
+    POLYLINE: {
       clampToGround: true,
       width: 4,
       material: Color.WHITE.withAlpha(0.4)
@@ -274,7 +274,7 @@ export default class Drawer {
 
     if (this._type === 'POLYGON') {
       this._typeClass = new Polygon(this._painter, extraOptions, $flag)
-    } else if (this._type === 'LINE') {
+    } else if (this._type === 'POLYLINE') {
       this._typeClass = new Line(this._painter, extraOptions, $flag)
     } else if (this._type === 'POINT') {
       this._typeClass = new Point(this._painter, extraOptions)

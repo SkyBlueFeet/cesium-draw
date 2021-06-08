@@ -1,6 +1,6 @@
 {
   "name": "cesium-plugins-draw",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "cesium-plugins-draw",
   "main": "dist/cesium-plugins-draw.iife.min.js",
   "module": "dist/cesium-plugins-draw.esm.min.js",
