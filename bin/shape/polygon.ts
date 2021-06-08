@@ -1,14 +1,12 @@
 import * as Cesium from 'cesium'
 
-import { Movement } from '@bin/typings/Event'
+import { EventArgs } from '@bin/typings/Event'
 
 import BasicGraphices, { LifeCycle } from '../base'
 
-import merge from 'lodash.merge'
-
 export default class Polygon extends BasicGraphices implements LifeCycle {
-  dropPoint(event: Movement): void {
-    const earthPosition = this.pointer.calcPositions(event.position)
+  dropPoint(event: EventArgs): void {
+    const earthPosition = this.pointer.pickCartesian3(event.position)
 
     if (Cesium.defined(earthPosition)) {
       if (!this.pointer._activeShapePoints.length) {
@@ -34,7 +32,7 @@ export default class Polygon extends BasicGraphices implements LifeCycle {
     hierarchy: Cesium.Cartesian3[] | Cesium.CallbackProperty,
     isDynamic = false
   ): Cesium.Entity {
-    const polygon = merge(
+    const polygon = Object.assign(
       {},
       isDynamic && !this.sameStyle ? this.dynamicOptions : this.options,
       {

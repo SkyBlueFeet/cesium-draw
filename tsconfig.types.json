@@ -4,7 +4,7 @@
         "noEmitOnError": true,
         "emitDeclarationOnly": true,
         "declaration": true,
-        "declarationDir": "types",
+        "declarationDir": "typings",
         "removeComments": false,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
@@ -21,8 +21,11 @@
         "noEmit": false,
         "outDir": "dist",
         "lib": ["ES2015", "ES2016", "ES2017", "DOM"],
-        "types": ["lodash"]
+        "types": ["lodash"],
+        "paths": {
+            "@bin/*": ["bin/*"]
+        },
     },
-    "include": ["lib", "declare"],
+    "include": ["bin", "declare"],
     "exclude": ["node_modules", "dist", "types"]
 }

@@ -11,4 +11,35 @@
 
 ## Feature
 
-- Cesium 画点、折线、多边形面、圆、长方形等几何体，配置灵活
+- 通过 Cesium 实现 画点、折线、多边形面、圆、长方形等平面图形
+
+## Usage
+
+`npm`
+
+```bash
+npm i cesium-plugins-draw --save //或 yarn add cesium-plugins-draw
+```
+
+## Example
+
+```js
+Cesium.Ion.defaultAccessToken = '你的IonToken'
+const viewer = new Cesium.Viewer('cesium-container', {
+  terrainProvider: Cesium.createWorldTerrain()
+})
+
+const drawer = new cesiumDraw({
+  viewer,
+  terrain: false,
+  action: (EventType, moveMent) => {
+    console.log(EventType, moveMent)
+  }
+})
+
+// 画面
+drawer.start({
+  type: 'POLYGON',
+  oneInstance: false
+})
+```

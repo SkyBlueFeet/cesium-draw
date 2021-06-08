@@ -5,6 +5,7 @@
         "removeComments": false,
         "resolveJsonModule": true,
         "experimentalDecorators": true,
+        "declaration": false,
         "downlevelIteration": true,
         "esModuleInterop": true,
         "module": "ESNext",

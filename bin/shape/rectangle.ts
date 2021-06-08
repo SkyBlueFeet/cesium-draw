@@ -6,11 +6,10 @@ import {
   JulianDate
 } from 'cesium'
 import BasicGraphices, { LifeCycle } from '@bin/base'
-import { Movement } from '@bin/typings/Event'
-import merge from 'lodash.merge'
+import { EventArgs } from '@bin/typings/Event'
 
 export default class Rectangle extends BasicGraphices implements LifeCycle {
-  dropPoint(move: Movement): void {
+  dropPoint(move: EventArgs): void {
     this._dropPoint(move, this.createShape.bind(this))
   }
 
@@ -26,7 +25,7 @@ export default class Rectangle extends BasicGraphices implements LifeCycle {
       ? hierarchy
       : hierarchy.getValue(JulianDate.now())
 
-    const rectangle = merge(
+    const rectangle = Object.assign(
       {},
       isDynamic && !this.sameStyle ? this.dynamicOptions : this.options,
       {

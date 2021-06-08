@@ -1,11 +1,11 @@
 import { Entity, Cartesian3, CallbackProperty, defined } from 'cesium'
 import Painter from '@bin/painter'
-import { Movement } from '@bin/typings/Event'
+import { EventArgs } from '@bin/typings/Event'
 
 export interface LifeCycle {
-  dropPoint?(move: Movement): void
-  moving?(move: Movement): void
-  playOff?(move: Movement): void
+  dropPoint?(move: EventArgs): void
+  moving?(move: EventArgs): void
+  playOff?(move: EventArgs): void
   createShape?: Function
 }
 
@@ -17,10 +17,6 @@ export default class BasicGraphices {
 
   dynamicOptions: object = {}
   sameStyle: boolean
-  // constructor(pointer: Painter) {
-  //   this.pointer = pointer;
-  //   this._terrain = pointer._terrain;
-  // }
 
   constructor(painter: Painter, options: object = {}, flag?: object | true) {
     this.pointer = painter
@@ -31,8 +27,8 @@ export default class BasicGraphices {
     this.sameStyle = typeof flag === 'boolean' ? flag : false
   }
 
-  _dropPoint(move: Movement, createShape: Function): void {
-    const earthPosition = this.pointer.calcPositions(move.position)
+  protected _dropPoint(move: EventArgs, createShape: Function): void {
+    const earthPosition = this.pointer.pickCartesian3(move.position)
 
     if (!defined(earthPosition)) return
 
@@ -43,19 +39,19 @@ export default class BasicGraphices {
     this.SetBreakpoint(earthPosition)
   }
 
-  moving(event: Movement): void {
+  moving(event: EventArgs): void {
     this._moving(event)
   }
 
-  _moving(event: Movement, createShape?: Function): void {
-    const earthPosition = this.pointer.calcPositions(event.endPosition)
+  protected _moving(event: EventArgs, createShape?: Function): void {
+    const earthPosition = this.pointer.pickCartesian3(event.endPosition)
     if (defined(earthPosition)) {
       this.pointer._activeShapePoints.pop()
       this.pointer._activeShapePoints.push(earthPosition)
     }
   }
 
-  _playOff(createShape: Function): void {
+  protected _playOff(createShape: Function): void {
     this.pointer._activeShapePoints.pop()
 
     this.result = createShape(this.pointer._activeShapePoints)

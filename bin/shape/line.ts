@@ -1,9 +1,8 @@
 import * as Cesium from 'cesium'
-import { Movement } from '@bin/typings/Event'
+import { EventArgs } from '@bin/typings/Event'
 import BasicGraphices from '@bin/base'
-import merge from 'lodash.merge'
 export default class Line extends BasicGraphices {
-  dropPoint(event: Movement): void {
+  dropPoint(event: EventArgs): void {
     this._dropPoint(event, this.createShape.bind(this))
   }
 
@@ -15,7 +14,7 @@ export default class Line extends BasicGraphices {
     positions: Cesium.Cartesian3[] | Cesium.CallbackProperty,
     isDynamic = false
   ): Cesium.Entity {
-    const polyline: Cesium.PolylineGraphics.ConstructorOptions = merge(
+    const polyline: Cesium.PolylineGraphics.ConstructorOptions = Object.assign(
       {},
       isDynamic && !this.sameStyle ? this.dynamicOptions : this.options,
       { positions }

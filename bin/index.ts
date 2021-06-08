@@ -7,49 +7,88 @@ import {
   PolylineGraphics,
   PolygonGraphics,
   Color,
-  Cartesian3,
-  Matrix4,
   EllipseGraphics,
-  RectangleGraphics
+  RectangleGraphics,
+  defaultValue
 } from 'cesium'
 
 import Subscriber, { EventType } from '@bin/subscriber'
-import { Movement } from '@bin/typings/Event'
+import { EventArgs } from '@bin/typings/Event'
 import Painter from '@bin/painter'
 import Polygon from '@bin/shape/polygon'
 import Line from '@bin/shape/line'
 import Point from '@bin/shape/point'
-import merge from 'lodash.merge'
 import Circle from '@bin/shape/circle'
 import Rectangle from '@bin/shape/rectangle'
 
-type OverrideEntities = (
-  this: Draw,
+type OverrideEntityFunc = (
+  this: Drawer,
   action: EventType,
   entity: Entity
 ) => Entity | void
 
-export type Keyboard = {
+/**
+ * @todo 为了防止产生侵入性bug，请在配置前确认相关事件是否可用，不再默认移除原生事件
+ */
+export type OperationType = {
+  /**
+   * @desc 勾画开始事件
+   * @type EventType
+   * @default LEFT_CLICK
+   */
   START?: EventType
+  /**
+   * @desc 勾画移动事件
+   * @type EventType
+   * @default MOUSE_MOVE
+   */
   MOVING?: EventType
+  /**
+   * @desc 勾画结束事件
+   * @type EventType
+   * @default RIGHT_CLICK
+   */
   END?: EventType
+
+  /**
+   * @desc 勾画销毁事件
+   * @type EventType
+   * @default MIDDLE_CLICK
+   */
   DESTROY?: EventType
 }
 
-export type DrawCallback = (entity: Entity) => void
+export type DrawerCallback = (entity: Entity) => void
 
+/**
+ * @desc 操作回调
+ * @param action 事件名
+ * @param move 事件参数
+ */
 export type ActionCallback = (
-  this: Draw,
+  this: Drawer,
   action: EventType,
-  move: Movement
+  move: EventArgs
 ) => void
 
 type Status = 'INIT' | 'START' | 'PAUSE' | 'DESTROY'
 
 export interface DrawOption {
+  /**
+   * @desc 勾画的视图
+   */
   viewer: Viewer
+
+  /**
+   * @desc 是否使用地形，当开启时需要浏览器支持地形选取功能，如果不支持将会被关闭
+   */
   terrain?: boolean
-  keyboard?: Keyboard
+
+  /**
+   * @desc  操作方式
+   */
+  operateType?: OperationType
+
   dynamicGraphicsOptions?: {
     POINT?: PointGraphics.ConstructorOptions
     LINE?: PolylineGraphics.ConstructorOptions
@@ -62,10 +101,30 @@ export interface DrawOption {
 }
 
 type StartOption = {
+  /**
+   * @desc 勾画类型 目前支持 Polygon、Line、Point、Circle、Rectangle
+   * @default false
+   */
   type: 'POLYGON' | 'LINE' | 'POINT' | 'CIRCLE' | 'RECTANGLE'
+
+  /**
+   * 是否只勾画一次，如果设为true，则在第一勾画结束时停止
+   * @default undefined
+   */
   once?: boolean
+  /**
+   * @desc 是否使用单例模式，如果开启，当勾画第二个图形时会销毁第一个图形
+   */
   oneInstance?: boolean
+
+  /**
+   * @desc 勾画的Entity选项，如Point对应#PointGraphics.ConstructorOptions
+   */
   options?: object
+
+  /**
+   * @desc 动态勾画没有确定图形时的图形配置，类型与options选项相同
+   */
   dynamicOptions?: object
 }
 
@@ -75,12 +134,16 @@ type Optional<T> = {
 
 const defaultOptions: Optional<DrawOption> = {
   terrain: false,
-  keyboard: {
+  operateType: {
     START: 'LEFT_CLICK',
     MOVING: 'MOUSE_MOVE',
     END: 'RIGHT_CLICK',
     DESTROY: 'MIDDLE_CLICK'
   },
+
+  /**
+   * 图形勾画时的Entity样式
+   */
   dynamicGraphicsOptions: {
     LINE: {
       clampToGround: true,
@@ -95,7 +158,7 @@ const defaultOptions: Optional<DrawOption> = {
   sameStyle: true
 }
 
-export default class Draw {
+export default class Drawer {
   private _viewer: Viewer
   private _type: StartOption['type']
   private _terrain: boolean
@@ -115,12 +178,18 @@ export default class Draw {
 
   private _dynamicGraphicsOptions: DrawOption['dynamicGraphicsOptions']
 
-  private dropPoint: (move: Movement) => void
-  private moving: (move: Movement) => void
-  private playOff: (move: Movement) => void
+  private _dropPoint: (move: EventArgs) => void
+  private _moving: (move: EventArgs) => void
+  private _playOff: (move: EventArgs) => void
 
-  private _keyboard: Keyboard
+  /**
+   * @desc 操作方式
+   */
+  private _operateType: OperationType
 
+  /**
+   * @desc 动作回调
+   */
   private _action: ActionCallback
 
   private _sameStyle: boolean
@@ -134,44 +203,55 @@ export default class Draw {
   }
 
   constructor(options: DrawOption) {
+    this._option = defaultValue(options, {})
+
     if (!options.viewer) throw new Error('请输入Viewer对象！')
 
-    this._option = merge({}, defaultOptions, options)
-    this._keyboard = this._option.keyboard
+    // 设置操作方式
+    this._operateType = defaultValue(this._option.operateType, {})
+
+    this._operateType = Object.assign(
+      defaultOptions.operateType,
+      this._operateType
+    )
 
     this._viewer = this._option.viewer
-    this._terrain = this._option.terrain
+    this._terrain = defaultValue(this._option.terrain, defaultOptions.terrain)
 
     this._action = this._option.action
 
-    this._dynamicGraphicsOptions = this._option.dynamicGraphicsOptions
+    this._dynamicGraphicsOptions = defaultValue(
+      this._option.dynamicGraphicsOptions,
+      defaultOptions.dynamicGraphicsOptions
+    )
 
     if (this._terrain && !this._viewer.scene.pickPositionSupported) {
-      console.warn('This browser does not support pickPosition.')
+      console.warn(
+        '浏览器不支持 pickPosition属性，无法在有地形的情况下正确选点'
+      )
       this._terrain = false
     }
-
-    // this.initPainter();
 
     this._subscriber = new Subscriber(this._viewer)
 
     this._status = 'INIT'
-
-    Object.keys(this._option.keyboard).forEach(key =>
-      Subscriber.removeNative(this._viewer, this._option.keyboard[key])
-    )
-
-    // console.log(picker);
-
-    // Zoom in to an area with mountains
-    this.setCamera()
+    // 为了防止产生侵入性bug，请在使用前确认相关事件是否可用，不再默认移除原生事件
+    // Object.keys(this._option.keyboard).forEach(key =>
+    //   Subscriber.removeNative(this._viewer, this._option.keyboard[key])
+    // )
 
     this._subscriber.addExternal(() => {
       this.destroy()
-    }, this._keyboard.DESTROY)
+    }, this._operateType.DESTROY)
   }
 
-  initPainter(
+  /**
+   *
+   * @param config 配置
+   * @param extraOptions
+   * @param dynamicOptions
+   */
+  private _initPainter(
     config: StartOption,
     extraOptions?: object,
     dynamicOptions?: object
@@ -184,96 +264,102 @@ export default class Draw {
 
     this._sameStyle = this._option.sameStyle
 
-    const $flag = this._sameStyle
+    const $flag: any = this._sameStyle
       ? false
-      : merge({}, this._dynamicGraphicsOptions[this._type], dynamicOptions)
-
-    const $options = extraOptions
+      : Object.assign(
+          {},
+          this._dynamicGraphicsOptions[this._type],
+          dynamicOptions
+        )
 
     if (this._type === 'POLYGON') {
-      this._typeClass = new Polygon(this._painter, $options, $flag)
+      this._typeClass = new Polygon(this._painter, extraOptions, $flag)
     } else if (this._type === 'LINE') {
-      this._typeClass = new Line(this._painter, $options, $flag)
+      this._typeClass = new Line(this._painter, extraOptions, $flag)
     } else if (this._type === 'POINT') {
-      this._typeClass = new Point(this._painter, $options)
+      this._typeClass = new Point(this._painter, extraOptions)
     } else if (this._type === 'CIRCLE') {
-      this._typeClass = new Circle(this._painter, $options, $flag)
+      this._typeClass = new Circle(this._painter, extraOptions, $flag)
     } else if (this._type === 'RECTANGLE') {
-      this._typeClass = new Rectangle(this._painter, $options, $flag)
+      this._typeClass = new Rectangle(this._painter, extraOptions, $flag)
     } else {
       throw new Error(`the type '${this._type}' is not support`)
     }
 
-    this.dropPoint = this._typeClass.dropPoint
-    this.moving = this._typeClass.moving
-    this.playOff = this._typeClass.playOff
+    this._dropPoint = this._typeClass.dropPoint.bind(this._typeClass)
+    this._moving = this._typeClass.moving.bind(this._typeClass)
+    this._playOff = this._typeClass.playOff.bind(this._typeClass)
   }
 
-  start(config: StartOption, override?: OverrideEntities): void {
-    this.initPainter(config, config.options, config.dynamicOptions)
+  /**
+   * @desc 绘制函数,
+   * @param config 绘制配置，可以通过定义options直接改写结果而不再填第二个参数
+   * @param overrideFunc Entity 重写函数，用于重写绘制结果，如果 overrideFunc返回一个Entity,则将该Entity添加到Viewer中，否则结束函数无操作
+   * @returns
+   */
+  start(config: StartOption, overrideFunc?: OverrideEntityFunc): void {
+    overrideFunc = defaultValue(
+      overrideFunc,
+      (action: EventType, entity: Entity) => entity
+    )
 
-    // this._typeClass.options = merge({}, options, this._typeClass.options);
+    this._initPainter(config, config.options, config.dynamicOptions)
 
     if (this._status === 'START') return
 
     this._status = 'START'
 
+    /**
+     * @desc 是否开始绘制
+     */
     let isStartDrow = false
 
     const startId = this._subscriber.addExternal(move => {
       isStartDrow = true
 
-      this.dropPoint.call(this._typeClass, move)
+      this._dropPoint(move)
 
-      if (this._action) this._action(this._keyboard.START, move)
+      if (this._action) this._action(this._operateType.START, move)
 
       // 如果是点，则此时执行点的结束绘制操作
       if (this._type !== 'POINT') return
 
-      this.complete(override, config.once, config.oneInstance)
+      this._complete(overrideFunc, config.once, config.oneInstance)
 
       isStartDrow = false
-    }, this._keyboard.START)
+    }, this._operateType.START)
 
     const moveId = this._subscriber.addExternal(move => {
       if (!isStartDrow) return
 
-      this.moving.call(this._typeClass, move)
+      this._moving(move)
 
       // ActionCallback
-      if (this._action) this._action('MOUSE_MOVE', move)
-    }, 'MOUSE_MOVE')
+      if (this._action) this._action(this._operateType.MOVING, move)
+    }, this._operateType.MOVING)
     // Redraw the shape so it's not dynamic and remove the dynamic shape.
 
     const endId = this._subscriber.addExternal(move => {
       if (!isStartDrow) return
 
       // 结束绘制，确定实体
-      this.playOff.call(this._typeClass, move)
+      this._playOff(move)
 
       // ActionCallback
-      if (this._action) this._action(this._keyboard.END, move)
+      if (this._action) this._action(this._operateType.END, move)
 
       if (this._type === 'POINT') return
 
-      this.complete(override, config.once, config.oneInstance)
+      this._complete(overrideFunc, config.once, config.oneInstance)
 
       isStartDrow = false
-    }, this._option.keyboard.END)
+    }, this._operateType.END)
 
     this._events.push(startId, moveId, endId)
   }
 
-  private setCamera(): void {
-    this._viewer.camera.lookAt(
-      Cartesian3.fromDegrees(-122.2058, 46.1955, 1000.0),
-      new Cartesian3(5000.0, 5000.0, 5000.0)
-    )
-    this._viewer.camera.lookAtTransform(Matrix4.IDENTITY)
-  }
-
-  private complete(
-    override: OverrideEntities,
+  private _complete(
+    override: OverrideEntityFunc,
     once: boolean,
     oneInstance: boolean
   ): void {
@@ -284,17 +370,14 @@ export default class Draw {
       this._viewer.entities.remove(this.$Instance)
     }
 
-    if (typeof override === 'function') {
-      this.$Instance = override.call(
-        this,
-        this._keyboard.END,
-        this._typeClass.result
-      )
-    } else {
-      this.$Instance = this._typeClass.result
-    }
+    this.$Instance = override.call(
+      this,
+      this._operateType.END,
+      this._typeClass.result
+    )
 
-    if (this.$Instance) this._viewer.entities.add(this.$Instance)
+    if (this.$Instance instanceof Entity)
+      this._viewer.entities.add(this.$Instance)
   }
 
   pause(): void {

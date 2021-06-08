@@ -13,14 +13,14 @@ import {
   Entity
 } from 'cesium'
 import { uniqueId } from '@bin/utils/random'
-import { Movement } from '@bin/typings/Event'
+import { EventArgs } from '@bin/typings/Event'
 
 export type ListenCallback<T extends Entity> = (
-  movement: Movement,
+  movement: EventArgs,
   substance: T
 ) => void
 
-export type ExternalListenCallback = (movement: Movement) => void
+export type ExternalListenCallback = (movement: EventArgs) => void
 
 // const eventType = ;
 
@@ -49,15 +49,15 @@ type ExternalEventCollection = Record<
 >
 
 export default class Subscriber {
-  private viewer: Viewer
+  private _viewer: Viewer
 
-  private handler: ScreenSpaceEventHandler
+  private _handler: ScreenSpaceEventHandler
 
-  private eventCollection: EventCollection = Object.create(null)
+  private _eventCollection: EventCollection = Object.create(null)
 
-  private externalEventCollection: ExternalEventCollection = Object.create(null)
+  private _externalEventCollection: ExternalEventCollection = Object.create({})
 
-  private readonly eventTypeList: EventType[] = [
+  private readonly _eventTypeList: EventType[] = [
     'LEFT_DOWN',
     'LEFT_UP',
     'LEFT_CLICK',
@@ -75,27 +75,34 @@ export default class Subscriber {
     'PINCH_END'
   ]
 
-  private isDestroy: boolean
-
-  constructor(viewer: Viewer, element?: HTMLCanvasElement) {
-    this.viewer = viewer
-    this.handler = new ScreenSpaceEventHandler(element || this.viewer.canvas)
-    this.isDestroy = false
-    this.initListener()
+  /**
+   * 是否被销毁
+   */
+  get isDestroy() {
+    return this._isDestroy
   }
 
-  private initListener(): void {
-    this.eventTypeList.forEach(type => {
-      this.eventCollection[type] = new Map()
-      this.externalEventCollection[type] = new Map()
+  private _isDestroy: boolean
+
+  constructor(viewer: Viewer, element?: HTMLCanvasElement) {
+    this._viewer = viewer
+    this._handler = new ScreenSpaceEventHandler(element || this._viewer.canvas)
+    this._isDestroy = false
+    this._initListener()
+  }
+
+  private _initListener(): void {
+    this._eventTypeList.forEach(type => {
+      this._eventCollection[type] = new Map()
+      this._externalEventCollection[type] = new Map()
     })
   }
 
-  private eventRegister(eventType: EventType): void {
-    if (this.isDestroy) return
-    const eventCollection = this.eventCollection[eventType]
-    const externalEventCollection = this.externalEventCollection[eventType]
-    this.handler.setInputAction((movement: Movement) => {
+  private _eventRegister(eventType: EventType): void {
+    if (this._isDestroy) return
+    const eventCollection = this._eventCollection[eventType]
+    const externalEventCollection = this._externalEventCollection[eventType]
+    this._handler.setInputAction((movement: EventArgs) => {
       if (externalEventCollection.size > 0) {
         const iterator = externalEventCollection.values()
         let val = iterator.next()
@@ -105,10 +112,10 @@ export default class Subscriber {
         }
       }
 
-      if (this.isDestroy) return
+      if (this._isDestroy) return
 
       if (movement.position) {
-        const entity: Entity = this.viewer.scene.pick(movement.position)?.id
+        const entity: Entity = this._viewer.scene.pick(movement.position)?.id
         if (
           entity &&
           eventCollection.has(entity.id) &&
@@ -134,38 +141,38 @@ export default class Subscriber {
     callback: ListenCallback<T>,
     eventType: EventType
   ): void {
-    if (this.isDestroy) return
+    if (this._isDestroy) return
 
     if (
-      this.eventCollection[eventType].size === 0 &&
-      this.externalEventCollection[eventType].size === 0
+      this._eventCollection[eventType].size === 0 &&
+      this._externalEventCollection[eventType].size === 0
     )
-      this.eventRegister(eventType)
+      this._eventRegister(eventType)
 
     substances = Array.isArray(substances) ? substances : [substances]
 
     for (const substance of substances) {
-      this.eventCollection[eventType].set(substance.id, callback)
+      this._eventCollection[eventType].set(substance.id, callback)
     }
   }
 
   /**
-   * @description 添加特定事件，与add不同在于该事件不会过滤Substance
+   * @description 添加特定事件，与add不同在于该事件不会过滤Entity
    * @param callback 事件处理函数
    * @param eventType 事件类型
    * @return {string} Event Id  事件移除时需要提供事件ID
    */
   addExternal(callback: ExternalListenCallback, eventType: EventType): string {
-    if (this.isDestroy) return
+    if (this._isDestroy) return
 
     if (
-      this.eventCollection[eventType].size === 0 &&
-      this.externalEventCollection[eventType].size === 0
+      this._eventCollection[eventType].size === 0 &&
+      this._externalEventCollection[eventType].size === 0
     )
-      this.eventRegister(eventType)
+      this._eventRegister(eventType)
 
     const eId = uniqueId()
-    this.externalEventCollection[eventType].set(eId, callback)
+    this._externalEventCollection[eventType].set(eId, callback)
     return eId
   }
 
@@ -175,36 +182,36 @@ export default class Subscriber {
    * @param eventType 需要移除的时间类型
    */
   remove<T extends Entity>(substances: T | T[], eventType: EventType): void {
-    if (this.isDestroy) return
+    if (this._isDestroy) return
 
     substances = Array.isArray(substances) ? substances : [substances]
     for (const substance of substances) {
-      if (this.eventCollection[eventType].has(substance.id)) {
-        this.eventCollection[eventType].delete(substance.id)
+      if (this._eventCollection[eventType].has(substance.id)) {
+        this._eventCollection[eventType].delete(substance.id)
       }
     }
   }
 
   removeExternal(ids: string | string[], eventType?: EventType): void {
-    if (this.isDestroy) return
+    if (this._isDestroy) return
 
     ids = Array.isArray(ids) ? ids : [ids]
 
     for (const id of ids) {
-      const type = eventType || this.searchExternal(id)
-      if (this.externalEventCollection[type].has(id)) {
-        this.externalEventCollection[type].delete(id)
+      const type = eventType || this._searchExternal(id)
+      if (this._externalEventCollection[type].has(id)) {
+        this._externalEventCollection[type].delete(id)
       }
     }
   }
 
-  private searchExternal(id: string): EventType {
-    if (this.isDestroy) return
+  private _searchExternal(id: string): EventType {
+    if (this._isDestroy) return
 
-    const types: EventType[] = Object.keys(this.externalEventCollection) as any
+    const types: EventType[] = Object.keys(this._externalEventCollection) as any
 
     for (const type of types) {
-      const events = this.externalEventCollection[type]
+      const events = this._externalEventCollection[type]
       if (events.has(id)) return type
     }
     return undefined
@@ -223,13 +230,13 @@ export default class Subscriber {
   }
 
   destroy(): void {
-    this.isDestroy = true
-    this.externalEventCollection = undefined
-    this.eventCollection = undefined
-    this.viewer = undefined
-    this.handler.destroy()
+    this._isDestroy = true
+    this._externalEventCollection = undefined
+    this._eventCollection = undefined
+    this._viewer = undefined
+    this._handler.destroy()
 
-    // 销毁方法
+    // 销毁所有方法
     this.add = undefined
     this.addExternal = undefined
     this.remove = undefined

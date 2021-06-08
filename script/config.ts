@@ -14,7 +14,7 @@ import filesize from 'rollup-plugin-filesize'
 import { eslint } from 'rollup-plugin-eslint'
 import { RollupOptions, OutputOptions, ModuleFormat } from 'rollup'
 
-import Typescript from '@rollup/plugin-typescript'
+import Typescript from 'rollup-plugin-typescript2'
 import { terser } from 'rollup-plugin-terser'
 
 import {
@@ -39,8 +39,8 @@ const $preSetExternal = {
 const rollupConfig: RollupOptions = {
   input: $entry,
   output: $format.map<OutputOptions>(format => ({
-    name: 'cesiumDraw',
-    file: `${$outDir}/${$name}.${format}.js`,
+    name: 'CesiumDraw',
+    file: `${$outDir}/${$name}.${format}.min.js`,
     format,
     banner:
       `${'/*!\n' + ' * '} ${$name}.${format}.js v${$version}\n` +
@@ -52,6 +52,11 @@ const rollupConfig: RollupOptions = {
   inlineDynamicImports: true,
   plugins: [
     Typescript(),
+    BabelPlugin({
+      extensions: $babelTransformFeild,
+      babelHelpers: 'bundled'
+    }),
+
     // 载入CommonJS模块
 
     NodeResolve({
@@ -69,12 +74,10 @@ const rollupConfig: RollupOptions = {
       keep_classnames: true,
       keep_fnames: true,
       output: {
-        comments: 'all'
+        comments: 'some'
       }
     }),
-    BabelPlugin({
-      extensions: $babelTransformFeild
-    }),
+
     filesize()
   ],
   external: Object.keys($preSetExternal)

@@ -94,4 +94,5 @@ build()
   .catch(err => {
     spinner.stop()
     console.log(chalk.red(`\n ${err}`))
+    console.log(err)
   })

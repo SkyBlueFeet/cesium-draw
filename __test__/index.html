@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link
+      rel="stylesheet"
+      href="/node_modules/cesium/Build/Cesium/Widgets/widgets.css"
+    />
+    <script src="/node_modules/cesium/Build/Cesium/Cesium.js"></script>
+    <script
+      type="text/javascript"
+      src="/dist/cesium-plugins-draw.iife.min.js"
+    ></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      #example-tool {
+        width: 200px;
+        height: 200px;
+        background-color: rgba(255, 255, 255, 0.5);
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 999;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="example-tool">
+      <div>
+        <select id="draw-type">
+          <option selected>Point 点</option>
+          <option>Polyline 折线</option>
+          <option>Polygon 面</option>
+          <option>Circle 圆</option>
+          <option>Rectangle 矩形</option>
+        </select>
+      </div>
+      <div><input type="checkbox" id="once" /> once</div>
+      <div>
+        <input type="checkbox" id="oneInstance" />
+        oneInstance
+      </div>
+      <p id="operate-copy"></p>
+    </div>
+    <div id="cesium-container"></div>
+
+    <script>
+      Cesium.Ion.defaultAccessToken =
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhOGE3M2Q0YS1iNDNkLTRlNzktYjI2ZC0zNzQxOTA4ZTE0YzkiLCJpZCI6MzM1NzIsImlhdCI6MTU5ODkzMTM0OX0.0smZopUOejbfDQ9zrX87y5aelApZCXwWXLm7_UuJRAA'
+    </script>
+
+    <script>
+      const select = document.querySelector('#draw-type')
+      let viewer
+      let drawer
+
+      function getDrawType() {
+        const mapping = ['POINT', 'LINE', 'POLYGON', 'CIRCLE', 'RECTANGLE']
+        return mapping[select.selectedIndex]
+      }
+
+      function getChectoutValue(id) {
+        return document.querySelector(id).checked
+      }
+
+      document.querySelector('#draw-type').addEventListener('change', update)
+
+      document.querySelector('#oneInstance').addEventListener('change', update)
+      document.querySelector('#once').addEventListener('change', update)
+
+      const getDrawOption = function() {
+        return {
+          viewer,
+          terrain: true,
+          action: (EventType, moveMent) => {
+            console.log(EventType, moveMent)
+          }
+        }
+      }
+
+      const getStartOption = function() {
+        return {
+          type: getDrawType(),
+          oneInstance: getChectoutValue('#oneInstance'),
+          once: getChectoutValue('#once')
+        }
+      }
+
+      window.onload = function() {
+        viewer = new Cesium.Viewer('cesium-container', {
+          terrainProvider: Cesium.createWorldTerrain()
+        })
+        update()
+
+        console.log(getChectoutValue('#once'))
+      }
+
+      function update() {
+        if (drawer) drawer.destroy()
+        drawer = new CesiumDraw(getDrawOption())
+
+        drawer.start(getStartOption())
+      }
+    </script>
+  </body>
+</html>

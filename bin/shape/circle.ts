@@ -1,11 +1,9 @@
 import BasicGraphices, { LifeCycle } from '@bin/base'
-import { Movement } from '@bin/typings/Event'
+import { EventArgs } from '@bin/typings/Event'
 import { CallbackProperty, Entity, Cartesian3, JulianDate } from 'cesium'
 
-import merge from 'lodash.merge'
-
 export default class Circle extends BasicGraphices implements LifeCycle {
-  dropPoint(move: Movement): void {
+  dropPoint(move: EventArgs): void {
     this._dropPoint(move, this.createShape.bind(this))
   }
 
@@ -21,7 +19,7 @@ export default class Circle extends BasicGraphices implements LifeCycle {
       ? hierarchy
       : hierarchy.getValue(JulianDate.now())
 
-    const ellipse = merge(
+    const ellipse = Object.assign(
       {},
       isDynamic && !this.sameStyle ? this.dynamicOptions : this.options,
       {
