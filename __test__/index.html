@@ -68,17 +68,25 @@
         return document.querySelector(id).checked
       }
 
-      function update() {
-        if (drawer) drawer.destroy()
-        drawer = new CesiumDraw(getDrawOption())
+      function update(reset) {
+        if (reset && drawer) {
+          drawer.destroy()
+        }
+
+        if (!drawer || drawer.isDestroy)
+          drawer = new CesiumDraw(getDrawOption())
 
         drawer.start(getStartOption())
       }
 
-      document.querySelector('#draw-type').addEventListener('change', update)
+      document
+        .querySelector('#draw-type')
+        .addEventListener('change', () => update())
 
-      document.querySelector('#oneInstance').addEventListener('change', update)
-      document.querySelector('#once').addEventListener('change', update)
+      document
+        .querySelector('#oneInstance')
+        .addEventListener('change', () => update())
+      document.querySelector('#once').addEventListener('change', () => update())
 
       const getDrawOption = function() {
         return {
