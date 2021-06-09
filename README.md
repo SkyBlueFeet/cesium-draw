@@ -29,7 +29,7 @@ const viewer = new Cesium.Viewer('cesium-container', {
   terrainProvider: Cesium.createWorldTerrain()
 })
 
-const drawer = new cesiumDraw({
+const drawer = new CesiumDraw({
   viewer,
   terrain: false,
   action: (EventType, moveMent) => {
