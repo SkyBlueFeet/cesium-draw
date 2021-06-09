@@ -9,7 +9,8 @@ import {
   Color,
   EllipseGraphics,
   RectangleGraphics,
-  defaultValue
+  defaultValue,
+  clone
 } from 'cesium'
 
 import Subscriber, { EventType } from '@bin/subscriber'
@@ -188,6 +189,15 @@ export default class Drawer {
   private _operateType: OperationType
 
   /**
+   *
+   */
+  private _startOptions: StartOption
+
+  private _oneInstance: boolean
+
+  private _once: boolean
+
+  /**
    * @desc 动作回调
    */
   private _action: ActionCallback
@@ -246,21 +256,13 @@ export default class Drawer {
   }
 
   /**
-   *
-   * @param config 配置
    * @param extraOptions
    * @param dynamicOptions
    */
-  private _initPainter(
-    config: StartOption,
-    extraOptions?: object,
-    dynamicOptions?: object
-  ): void {
+  private _initPainter(extraOptions?: object, dynamicOptions?: object): void {
     const painterOptions = { viewer: this._viewer, terrain: this._terrain }
 
     this._painter = new Painter(painterOptions)
-
-    this._type = config.type
 
     this._sameStyle = this._option.sameStyle
 
@@ -282,8 +284,6 @@ export default class Drawer {
       this._typeClass = new Circle(this._painter, extraOptions, $flag)
     } else if (this._type === 'RECTANGLE') {
       this._typeClass = new Rectangle(this._painter, extraOptions, $flag)
-    } else {
-      throw new Error(`the type '${this._type}' is not support`)
     }
 
     this._dropPoint = this._typeClass.dropPoint.bind(this._typeClass)
@@ -303,7 +303,20 @@ export default class Drawer {
       (action: EventType, entity: Entity) => entity
     )
 
-    this._initPainter(config, config.options, config.dynamicOptions)
+    config = defaultValue(config, {})
+    config.options = defaultValue(config.options, {})
+    config.dynamicOptions = defaultValue(config.dynamicOptions, {})
+
+    this._once = defaultValue(config.once, false)
+    this._oneInstance = defaultValue(config.oneInstance, false)
+
+    if (!this._isSupport(config.type)) {
+      throw new Error(`the type '${config.type}' is not support`)
+    }
+
+    this._type = config.type
+
+    this._initPainter(clone(config.options), clone(config.dynamicOptions))
 
     if (this._status === 'START') return
 
@@ -324,7 +337,7 @@ export default class Drawer {
       // 如果是点，则此时执行点的结束绘制操作
       if (this._type !== 'POINT') return
 
-      this._complete(overrideFunc, config.once, config.oneInstance)
+      this._complete(overrideFunc)
 
       isStartDrow = false
     }, this._operateType.START)
@@ -350,23 +363,19 @@ export default class Drawer {
 
       if (this._type === 'POINT') return
 
-      this._complete(overrideFunc, config.once, config.oneInstance)
+      this._complete(overrideFunc)
 
       isStartDrow = false
     }, this._operateType.END)
 
-    this._events.push(startId, moveId, endId)
+    this._events = [startId, moveId, endId]
   }
 
-  private _complete(
-    override: OverrideEntityFunc,
-    once: boolean,
-    oneInstance: boolean
-  ): void {
+  private _complete(override: OverrideEntityFunc): void {
     // 如果是线和面，则此时将实例添加到Viewer中
-    once && this.pause()
+    this._once && this.pause()
 
-    if (oneInstance && this.$Instance) {
+    if (this._oneInstance && this.$Instance) {
       this._viewer.entities.remove(this.$Instance)
     }
 
@@ -378,6 +387,12 @@ export default class Drawer {
 
     if (this.$Instance instanceof Entity)
       this._viewer.entities.add(this.$Instance)
+  }
+
+  private _isSupport(type: string) {
+    return ['POLYGON', 'POLYLINE', 'POINT', 'CIRCLE', 'RECTANGLE'].includes(
+      type
+    )
   }
 
   pause(): void {

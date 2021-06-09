@@ -68,33 +68,35 @@
         return document.querySelector(id).checked
       }
 
-      function update(reset) {
-        if (reset && drawer) {
-          drawer.destroy()
-        }
+      function update(option, reset) {
+        if (!drawer) drawer = new CesiumDraw(getDrawOption())
 
-        if (!drawer || drawer.isDestroy)
-          drawer = new CesiumDraw(getDrawOption())
-
-        drawer.start(getStartOption())
+        drawer.start({ ...option })
       }
 
-      document
-        .querySelector('#draw-type')
-        .addEventListener('change', () => update())
+      document.querySelector('#draw-type').addEventListener('change', () => {
+        const options = Cesium.clone(getStartOption(), true)
+        console.log(options)
+        update(options)
+      })
 
-      document
-        .querySelector('#oneInstance')
-        .addEventListener('change', () => update())
-      document.querySelector('#once').addEventListener('change', () => update())
+      document.querySelector('#oneInstance').addEventListener('change', () => {
+        const options = Cesium.clone(getStartOption(), true)
+        console.log(options)
+        update(options)
+      })
+      document.querySelector('#once').addEventListener('change', () => {
+        const options = Cesium.clone(getStartOption(), true)
+        update(options)
+      })
 
       const getDrawOption = function() {
         return {
           viewer,
-          terrain: true,
-          action: (EventType, moveMent) => {
-            console.log(EventType, moveMent)
-          }
+          terrain: false
+          // action: (EventType, moveMent) => {
+          //   console.log(EventType, moveMent)
+          // }
         }
       }
 
@@ -108,9 +110,10 @@
 
       window.onload = function() {
         viewer = new Cesium.Viewer('cesium-container', {
-          terrainProvider: Cesium.createWorldTerrain()
+          // terrainProvider: Cesium.createWorldTerrain()
         })
-        update()
+
+        update(getStartOption())
       }
     </script>
   </body>
