@@ -1,0 +1,15 @@
+/declare/**/*
+/bin/**/*
+/script/**/*
+/__test__/**/*
+
+# 配置文件
+.prettierrc
+.babelrc
+.eslintrc
+.eslintignore
+.gitignore
+tsconfig.rollup.json
+tsconfig.types.json
+yarn.lock
+package-lock.json

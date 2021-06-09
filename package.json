@@ -2,8 +2,9 @@
     "name": "cesium-plugins-draw",
     "version": "1.2.2",
     "description": "cesium-plugins-draw",
-    "main": "dist/cesium-plugins-draw.iife.min.js",
-    "module": "dist/cesium-plugins-draw.esm.min.js",
+    "main": "dist/cesium-plugins-draw.esm.min.js",
+    "module": "dist/cesium-plugins-draw.cjs.min.js",
+    "brower": "dist/cesium-plugins-draw.iife.min.js",
     "repository": {
         "url": "https://github.com/SkyBlueFeet/cesium-draw.git"
     },
@@ -14,9 +15,9 @@
     ],
     "keywords": [
         "typescript",
-        "rollup"
+        "cesium"
     ],
-    "typings": "typings",
+    "typings": "typings/index.d.ts",
     "scripts": {
         "build:types": "rimraf types && tsc -p tsconfig.types.json",
         "build:lib": "rimraf dist && ts-node --project tsconfig.rollup.json script/build",

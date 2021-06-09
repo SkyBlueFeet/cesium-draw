@@ -37,9 +37,15 @@ const drawer = new cesiumDraw({
   }
 })
 
-// 画面
+// 开始绘制
 drawer.start({
   type: 'POLYGON',
   oneInstance: false
 })
+
+// 暂停
+drawer.pause()
+
+// 销毁
+drawer.destroy()
 ```
