@@ -76,13 +76,11 @@
 
       document.querySelector('#draw-type').addEventListener('change', () => {
         const options = Cesium.clone(getStartOption(), true)
-        console.log(options)
         update(options)
       })
 
       document.querySelector('#oneInstance').addEventListener('change', () => {
         const options = Cesium.clone(getStartOption(), true)
-        console.log(options)
         update(options)
       })
       document.querySelector('#once').addEventListener('change', () => {
