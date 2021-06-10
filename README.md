@@ -11,7 +11,13 @@
 
 ## Feature
 
-- 通过 Cesium 实现 画点、折线、多边形面、圆、长方形等平面图形
+- Cesium 框架 实现 画点、折线、多边形面、圆、长方形等平面图形
+- 封装了绘制函数并放开了绘制操作的事件回调
+- 分别定义绘制时和绘制后的样式,可以通过函数拦截下绘制完成的图形
+
+## Description
+
+个人随手作品.仅供各位道友参考实现,没有经过严格的测试,不建议用于生产环境
 
 ## Install
 
@@ -50,37 +56,6 @@ drawer.destroy()
 `声明`
 
 ```ts
-declare type OverrideEntityFunc = (
-  this: Drawer,
-  action: EventType,
-  entity: Entity
-) => Entity | void
-
-declare type StartOption = {
-  /**
-   * @desc 勾画类型 目前支持 Polygon、Line、Point、Circle、Rectangle
-   * @default false
-   */
-  type: 'POLYGON' | 'POLYLINE' | 'POINT' | 'CIRCLE' | 'RECTANGLE'
-  /**
-   * 是否只勾画一次，如果设为true，则在第一勾画结束时停止
-   * @default undefined
-   */
-  once?: boolean
-  /**
-   * @desc 是否使用单例模式，如果开启，当勾画第二个图形时会销毁第一个图形
-   */
-  oneInstance?: boolean
-  /**
-   * @desc 勾画的Entity选项，如Point对应#PointGraphics.ConstructorOptions
-   */
-  options?: object
-  /**
-   * @desc 动态勾画没有确定图形时的图形配置，类型与options选项相同
-   */
-  dynamicOptions?: object
-}
-
 class Drawer {
   get status(): Status
   get isDestroy(): boolean
@@ -104,6 +79,108 @@ class Drawer {
    * */
   destroy(): void
 }
+
+/**
+ * @desc 绘制事件,定义执行绘制的事件类型
+ * @todo 为了防止产生侵入性bug，请在配置前确认相关事件是否可用，不再默认移除原生事件
+ */
+declare type OperationType = {
+  /**
+   * @desc 勾画开始事件
+   * @type EventType
+   * @default LEFT_CLICK
+   */
+  START?: EventType
+  /**
+   * @desc 勾画移动事件
+   * @type EventType
+   * @default MOUSE_MOVE
+   */
+  MOVING?: EventType
+  /**
+   * @desc 勾画结束事件
+   * @type EventType
+   * @default RIGHT_CLICK
+   */
+  END?: EventType
+  /**
+   * @desc 勾画销毁事件
+   * @type EventType
+   * @default MIDDLE_CLICK
+   */
+  DESTROY?: EventType
+}
+
+declare type Status = 'INIT' | 'START' | 'PAUSE' | 'DESTROY'
+
+declare type OverrideEntityFunc = (
+  this: Drawer,
+  action: EventType,
+  entity: Entity
+) => Entity | void
+
+interface DrawOption {
+  /**
+   * @desc 勾画的视图
+   */
+  viewer: Viewer
+  /**
+   * @desc 是否使用地形，当开启时需要浏览器支持地形选取功能，如果不支持将会被关闭
+   */
+  terrain?: boolean
+  /**
+   * @desc  操作方式
+   */
+  operateType?: OperationType
+  dynamicGraphicsOptions?: {
+    POINT?: PointGraphics.ConstructorOptions
+    POLYLINE?: PolylineGraphics.ConstructorOptions
+    POLYGON?: PolygonGraphics.ConstructorOptions
+    CIRCLE?: EllipseGraphics.ConstructorOptions
+    RECTANGLE?: RectangleGraphics.ConstructorOptions
+  }
+  action?: ActionCallback
+  sameStyle?: boolean
+}
+
+declare type StartOption = {
+  /**
+   * @desc 勾画类型 目前支持 Polygon、Line、Point、Circle、Rectangle
+   * @default false
+   */
+  type: 'POLYGON' | 'POLYLINE' | 'POINT' | 'CIRCLE' | 'RECTANGLE'
+  /**
+   * 是否只勾画一次，如果设为true，则在第一勾画结束时执行Drawer#pause
+   * @default undefined
+   */
+  once?: boolean
+  /**
+   * @desc 是否使用单例模式，如果开启，当勾画第二个图形时会销毁第一个图形
+   */
+  oneInstance?: boolean
+  /**
+   * @desc 勾画的Entity选项，如Point对应#PointGraphics.ConstructorOptions
+   */
+  options?: object
+  /**
+   * @desc 动态勾画没有确定图形时的图形配置，类型与options选项相同,会与DrawOption.dynamicGraphicsOptions合并
+   */
+  dynamicOptions?: object
+}
 ```
 
+## Notification
+
+如果有使用地形数据的话,请开启 DrawOption 的 terrain 选项,否则会出现选点与位置不匹配的情况
+
 ## Example
+
+请查看 [`__test__/index.html`](https://github.com/SkyBlueFeet/cesium-draw/blob/main/__test__/index.html)
+
+## Reference
+
+[Drawing on Terrain](https://sandcastle.cesium.com/?src=Drawing%20on%20Terrain.html)
+
+## LICENSE
+
+MIT
