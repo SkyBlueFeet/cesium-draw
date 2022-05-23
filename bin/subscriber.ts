@@ -233,7 +233,6 @@ export default class Subscriber {
     this._isDestroy = true
     this._externalEventCollection = undefined
     this._eventCollection = undefined
-    this._viewer = undefined
     this._handler.destroy()
 
     // 销毁所有方法
