@@ -182,6 +182,7 @@ export default class Drawer {
   private _dropPoint: (move: EventArgs) => void
   private _moving: (move: EventArgs) => void
   private _playOff: (move: EventArgs) => void
+  private _reset: () => void
 
   /**
    * @desc 操作方式
@@ -269,10 +270,10 @@ export default class Drawer {
     const $flag: any = this._sameStyle
       ? false
       : Object.assign(
-          {},
-          this._dynamicGraphicsOptions[this._type],
-          dynamicOptions
-        )
+        {},
+        this._dynamicGraphicsOptions[this._type],
+        dynamicOptions
+      )
 
     if (this._type === 'POLYGON') {
       this._typeClass = new Polygon(this._painter, extraOptions, $flag)
@@ -289,6 +290,7 @@ export default class Drawer {
     this._dropPoint = this._typeClass.dropPoint.bind(this._typeClass)
     this._moving = this._typeClass.moving.bind(this._typeClass)
     this._playOff = this._typeClass.playOff.bind(this._typeClass)
+    this._reset = this._typeClass.pointer.reset.bind(this._typeClass)
   }
 
   /**
@@ -405,11 +407,20 @@ export default class Drawer {
     this._status = 'DESTROY'
     this._subscriber.destroy()
 
-    this._viewer = undefined
+    this._painter.reset()
+
+
+
+
     this._type = undefined
     this._terrain = undefined
     this.pause = undefined
     this.start = undefined
-    this.destroy = undefined
+    
+
+    setTimeout(() => {
+      this._viewer = undefined
+      this.destroy = undefined
+    })
   }
 }
