@@ -2,8 +2,8 @@
     "name": "cesium-plugins-draw",
     "version": "1.2.6",
     "description": "cesium-plugins-draw",
-    "main": "dist/cesium-plugins-draw.esm.min.js",
-    "module": "dist/cesium-plugins-draw.cjs.min.js",
+    "main": "dist/cesium-plugins-draw.umd.min.js",
+    "module": "dist/cesium-plugins-draw.esm.min.js",
     "brower": "dist/cesium-plugins-draw.iife.min.js",
     "repository": {
         "url": "https://github.com/SkyBlueFeet/cesium-draw.git"
@@ -20,7 +20,7 @@
     "typings": "typings/index.d.ts",
     "scripts": {
         "build:types": "rimraf types && tsc -p tsconfig.types.json",
-        "build:lib": "rimraf dist && ts-node --project tsconfig.rollup.json script/build",
+        "build:lib": "rimraf dist && node script/build.mjs",
         "example": "live-server --port=8080"
     },
     "author": "skybluefeet <yakun1593@163.com>",
@@ -41,10 +41,12 @@
         "@rollup/plugin-typescript": "^3.1.1",
         "@types/babel__core": "^7.1.10",
         "@types/lodash": "^4.14.161",
+        "@types/node": "^18.0.3",
         "@typescript-eslint/eslint-plugin": "^4.4.0",
         "@typescript-eslint/parser": "^4.4.0",
         "babel-plugin-module-resolver": "^3.2.0",
         "cesium": "^1.75.0",
+        "chalk": "^5.0.1",
         "core-js": "^3.7.0",
         "eslint": "^7.10.0",
         "eslint-config-prettier": "^6.12.0",
@@ -59,6 +61,7 @@
         "live-server": "^1.2.1",
         "lodash": "^4.17.20",
         "ora": "^5.0.0",
+        "prettier": "^2.7.1",
         "rollup": "^1.23.1",
         "rollup-plugin-babel": "^4.3.3",
         "rollup-plugin-css-only": "^1.0.0",

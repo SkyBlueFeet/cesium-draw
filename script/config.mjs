@@ -9,41 +9,62 @@
 import BabelPlugin from '@rollup/plugin-babel'
 import NodeResolve from '@rollup/plugin-node-resolve'
 import CommonJS from '@rollup/plugin-commonjs'
-import { DEFAULT_EXTENSIONS } from '@babel/core'
+import {
+  DEFAULT_EXTENSIONS
+} from '@babel/core'
 import filesize from 'rollup-plugin-filesize'
-import { eslint } from 'rollup-plugin-eslint'
-import { RollupOptions, OutputOptions, ModuleFormat } from 'rollup'
+import eslinePlugin from 'rollup-plugin-eslint'
+// {
+//   RollupOptions,
+//   OutputOptions,
+//   ModuleFormat
+// }
+import pkg from 'rollup'
 
 import Typescript from 'rollup-plugin-typescript2'
-import { terser } from 'rollup-plugin-terser'
-
 import {
-  name as $name,
-  version as $version,
-  author as $author
-} from '../package.json'
+  terser
+} from 'rollup-plugin-terser'
 
-const $entry: string | string[] = 'bin/index.ts'
+// import {
+//   name as $name,
+//   version as $version,
+//   author as $author
+// } from '../package.json'
+import { readFile, readFileSync } from 'fs'
+
+const {
+  name: $name,
+  version: $version,
+  author: $author
+} = JSON.parse(readFileSync('./package.json').toString())
+
+const $entry = 'bin/index.ts'
 const $outDir = 'dist'
 const $useEslint = true
 const $eslintFeild = ['.js', '.jsx', '.tsx', '.ts', '.vue']
 const $extensions = ['.vue', 'js', '.ts', '.tsx', '.jsx', '.json']
 const $babelTransformFeild = ['.ts', '.tsx', '.vue', ...DEFAULT_EXTENSIONS]
 
-const $format: ModuleFormat[] = ['cjs', 'iife', 'esm','umd']
+/**
+ * @type {ModuleFormat[]}
+ */
+const $format = ['cjs', 'iife', 'esm', 'umd']
 
 const $preSetExternal = {
   cesium: 'Cesium'
 }
 
-const rollupConfig: RollupOptions = {
+/**
+ * @type {RollupOptions}
+ */
+const rollupConfig = {
   input: $entry,
-  output: $format.map<OutputOptions>(format => ({
+  output: $format.map(format => ({
     name: 'CesiumDraw',
     file: `${$outDir}/${$name}.${format}.min.js`,
     format,
-    banner:
-      `${'/*!\n' + ' * '} ${$name}.${format}.js v${$version}\n` +
+    banner: `${'/*!\n' + ' * '} ${$name}.${format}.js v${$version}\n` +
       ` * (c) 2019-${new Date().getFullYear()} ${$author}\n` +
       ` * Released under the MIT License.\n` +
       ` */`,
@@ -52,9 +73,10 @@ const rollupConfig: RollupOptions = {
   inlineDynamicImports: true,
   plugins: [
     Typescript(),
-    BabelPlugin({
+    BabelPlugin.default({
       extensions: $babelTransformFeild,
-      babelHelpers: 'bundled'
+      babelHelpers: 'bundled',
+      
     }),
 
     // 载入CommonJS模块
@@ -85,7 +107,7 @@ const rollupConfig: RollupOptions = {
 
 if ($useEslint) {
   rollupConfig.plugins.push(
-    eslint({
+    eslinePlugin.eslint({
       fix: true,
       include: $eslintFeild.map(ext => new RegExp(`/\\${ext}$/`))
     })
